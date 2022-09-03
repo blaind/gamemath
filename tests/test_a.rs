@@ -7,27 +7,29 @@ use glam::{DQuat, DVec3, Quat};
 use glam::{Vec2, Vec3};
 
 #[test]
-fn test_quat() {
+fn test_identity_quaternion() {
+    // Identity quaternion, no rotation
     assert_eq!(Quat::IDENTITY, Quat::from_xyzw(0.0, 0.0, 0.0, 1.0));
-    assert_eq!(
-        Quat::from_rotation_x(0.),
-        Quat::from_xyzw(0.0, 0.0, 0.0, 1.0)
-    );
-    assert_eq!(
-        Quat::from_rotation_y(0.),
-        Quat::from_xyzw(0.0, 0.0, 0.0, 1.0)
-    );
-    assert_eq!(
-        Quat::from_rotation_z(0.),
-        Quat::from_xyzw(0.0, 0.0, 0.0, 1.0)
-    );
+}
 
+#[test]
+fn test_zero_rotations() {
+    // Zero rotations should be identity rotations
+    assert_eq!(Quat::from_rotation_x(0.).is_near_identity(), true);
+    assert_eq!(Quat::from_rotation_y(0.).is_near_identity(), true);
+    assert_eq!(Quat::from_rotation_z(0.).is_near_identity(), true);
+}
+
+#[test]
+fn test() {
+    // PI rotation and identity rotation angle should be PI
     assert_relative_eq!(
         Quat::from_rotation_x(PI).angle_between(Quat::IDENTITY),
         PI,
         epsilon = 1e-6
     );
 
+    // Two half-PI's rotations to opposite directions equal to full PI
     assert_relative_eq!(
         Quat::from_rotation_x(PI * 0.5).angle_between(Quat::from_rotation_x(-PI * 0.5)),
         PI,
@@ -35,12 +37,17 @@ fn test_quat() {
     );
 
     // assert_eq!(Quat::IDENTITY.dot(Quat::from_rotation_x(PI * 0.5)), PI);
+
+    // Interpolate with `0.5`
     assert_relative_eq!(
         Quat::IDENTITY.lerp(Quat::from_rotation_x(PI * 0.5), 0.5),
         Quat::from_rotation_x(PI * 0.25)
     );
 
+    // Scaled axis rotation should be zero for identity rotation
     assert_eq!(Quat::IDENTITY.to_scaled_axis(), Vec3::ZERO);
+
+    // Scaled axis X should be equal to initial rotation
     assert_relative_eq!(
         Quat::from_rotation_x(0.5 * PI).to_scaled_axis(),
         Vec3::new(0.5 * PI, 0., 0.),
@@ -56,18 +63,26 @@ fn test_quat() {
     //    (0., 0.5 * PI, 0.)
     //);
 
+    // Identity rotation axis angle should be around axis x
     assert_eq!(Quat::IDENTITY.to_axis_angle(), (Vec3::X, 0.0));
+
+    // Rotate 0.5PI around axis X --> axis angle = X, angle in radians 0.5PI
     assert_relative_eq!(Quat::from_rotation_x(0.5 * PI).to_axis_angle().0, Vec3::X);
     assert_relative_eq!(Quat::from_rotation_x(0.5 * PI).to_axis_angle().1, 0.5 * PI);
+
+    // Same but around Y-axis
     assert_relative_eq!(Quat::from_rotation_y(0.5 * PI).to_axis_angle().0, Vec3::Y);
     assert_relative_eq!(Quat::from_rotation_y(0.5 * PI).to_axis_angle().1, 0.5 * PI);
 
+    // If multiplying rotations around axis Y, axis angle remains Y
     assert_relative_eq!(
         (Quat::from_rotation_y(0.5 * PI) * Quat::from_rotation_y(0.5 * PI))
             .to_axis_angle()
             .0,
         Vec3::Y
     );
+
+    // Angles are being added together
     assert_relative_eq!(
         (Quat::from_rotation_y(0.5 * PI) * Quat::from_rotation_y(0.5 * PI))
             .to_axis_angle()
@@ -75,14 +90,15 @@ fn test_quat() {
         PI
     );
 
-    // why?
+    // TODO why?
     assert_relative_eq!(
         (Quat::from_rotation_x(0.5 * PI) * Quat::from_rotation_y(0.5 * PI))
             .to_axis_angle()
             .0,
         Vec3::new(0.5773502, 0.5773502, 0.5773502)
     );
-    // why?
+
+    // TODO why?
     assert_relative_eq!(
         (Quat::from_rotation_x(0.5 * PI) * Quat::from_rotation_y(0.5 * PI))
             .to_axis_angle()
